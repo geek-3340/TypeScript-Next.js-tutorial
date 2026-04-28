@@ -30,7 +30,9 @@ typescript_nextjs_tutorial/
 ```
 
 
-## ファイルシステムベースのルーティング
+## Next.jsのルーティングについて
+
+### 基本的なルーティング（ ファイルシステムベースのルーティング ）
 Next.jsでは`/app`直下にページ用のフォルダを作成し、その中に`page.tsx`を作成することで、フォルダ名からURLを作成したページとなる。
 
 例：以下の場合`/app/about/page.tsx`をサーバーにリクエストする際、Next.jsがファイル構造を見て自動で`http://localhost:3000/about`というURLを生成してくれる。
@@ -54,5 +56,9 @@ app/
 ├─ globals.css
 ├─ layout.tsx
 ├─ page.module.css
-└─ page.tsx
 ```
+
+### [動的ルーティング](./app/blogs/[id]/page.tsx)
+### [ルートグループ](./app/(admin)/dashboard/page.tsx)
+### [パラレルルート](./app/parallel/layout.tsx)
+### [インターセプティングルート](./app/feed/page.tsx)
