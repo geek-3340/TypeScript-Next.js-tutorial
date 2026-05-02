@@ -164,17 +164,28 @@ export default function About() {
 ### API Routes
 ファイルシステムベースのルーティングでAPIのエンドポイントを作成できる機能
 
-先ず`/app`配下に`/api/create/route.ts`を作成します。
+#### 使い方
+- `/app`配下に`/api/create/route.ts`を作成
 >`/api`や`/create`は慣習的に命名してるが、`route.ts`は予約ファイルのため、このファイル名であることが必須
 
-ファイル内のコンポーネント関数名をメソッド名(UPPER CASE)とし、引数にリクエストを受け取り処理を記述
-
+- ファイル内のコンポーネント関数名をHTTPメソッド名(UPPER CASE)とし、引数にリクエストを受け取り処理を記述
 >参照：[route.ts](./app/api/create/route.ts)
 
-これでAPIが完成し、client componentで呼び出す場合は以下のファイルのようになる
-
+- これでAPIが完成し、client componentで呼び出す場合は以下のファイルのようになる
 >参照：[クライアントコンポーネント](./app/api-routes-user/page.tsx)
 
 ### Sever Action
 同じコンポーネント内でバックエンドの処理と呼び出しイベント等の両方を実装できる機能
+外部のアプリからの呼び出しが難しい、WEB・ネイティブの両方でバックエンドの処理を共有する場合などは、API Routesの方が向いている
 
+#### 使い方
+- サーバーコンポーネントを作成
+- バックエンドの処理を行う関数を定義
+- 引数にformのデータ等を直接受け取る
+- 関数内のトップレベルで`'use server'`を宣言する
+- ロジックを記述する
+- 描画処理の例えばformであればaction属性で前述の関数を呼び出す
+
+>参照：[サーバーコンポーネント](./app/server-action-user/page.tsx)
+
+## Data Cache
