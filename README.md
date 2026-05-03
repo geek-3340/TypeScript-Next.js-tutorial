@@ -188,4 +188,107 @@ export default function About() {
 
 >参照：[サーバーコンポーネント](./app/server-action-user/page.tsx)
 
+## Next.jsのデータキャッシュ機能
+以下の４つの機能がある
+
+| 機能 | 保存先 | 概要 |
+| --- | --- | ------------------------------- |
+| Full Route Cache（自動有効） | サーバー | ビルド時にコンポーネント関数が実行され、HTMLなどの静的ファイルをキャッシュに保存し、アクセス時には関数は実行されずに保存されたものを返すだけ |
+| Router Cache（自動有効） | ブラウザ | ユーザーが開いたページをキャッシュに保存し、「戻る・進む」が瞬時に描画、またページ遷移の際に画面内にそのページへのリンクが見えた時点で先読みで読み込む |
+| Request Memorization（自動有効） | サーバー | 同じAPIに対して１回のリクエストで重複したアクセスが合った場合に１つにまとめる |
+| Data Cache（設定が必要） | サーバー | APIから取得したデータをキャッシュに保存し、そのAPIへのアクセス時には保存したでーたを返す |
+
 ## Data Cache
+あるAPIからデータを取得するとき、取得したデータをサーバーにキャッシュして、同じAPIであればリクエストを跨いでCacheしたデータを参照し高速なレスポンスを行う機能
+
+### 使用方法
+以下のコードのように`fetch()`の第二引数に、`cache: 'force-cache'`とすることで、そのAPIを最初に呼び出した際に、サーバーにキャッシュする
+```js
+const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const form = new FormData(e.currentTarget);
+        const name = form.get('name');
+
+        await fetch('/api/create', {
+            cache:'force-cache', // これによりData Cache有効化
+            method: 'POST', 
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name }),
+        });
+    };
+```
+
+## use cache
+Data Cacheをより簡単に実装できる機能
+
+### 使い方
+- `next.config.ts`に以下の設定を追記
+```js
+const nextConfig: NextConfig = {
+    /* config options here */
+    cacheComponents: true, // これを追記する
+};
+```
+
+- キャッシュに保存したいAPIの、呼び出し関数のトップレベルに`'use cache'`と記述する
+
+```js
+async function getHeavyData() {
+    'use cache' // これを記述する
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    return '重いデータの取得完了';
+}
+```
+
+## Revalidation
+サーバー側のキャッシュを削除・更新するためのしくみで
+主に`Full Route Cache`、`Data Cache`に対して行う
+>Request Memorizationは１リクエスト内で保存・削除される
+
+<br>
+例えば記事投稿サイトなどで記事を投稿したが、キャッシュが残っており一覧に表示されないなどという場合などに有効
+
+
+実装方法として**revalidatePath** と **revalidateTag**の２つがある
+
+### revalidatePath
+server actionコンポーネントの処理などで利用
+`revalidatePath('URL')`と記述することで実装できる
+引数にはファイルパスではなくURLを指定
+そのページ全体のキャッシュを削除できる
+
+### revalidateTag
+Next.jsではキャッシュに保存したデータに対してタグを付けることが出来る
+```js
+// fetchの場合（自動キャッシュ）
+fetch('http://hoge.com',{
+  next: { tag: ['posts'] }, // これにより取得したデータにpostsというタグ付け
+});
+
+// use cacheなどの場合
+async function hoge(){
+  'use cache'
+  cacheTag('posts'); // これにより取得したデータにpostsというタグ付け
+  // 処理の続き...
+}
+```
+<br>
+
+このタグ単位でのキャッシュ削除を実装できる機能が`revalidateTag`で
+`revalidateTag('tagName','max')`のように記述することで実装
+
+>第二引数には挙動を細かく指定するプロファイルを指定する
+>max: キャッシュ更新するが、以前のキャッシュをすぐに削除せず、古いものとして残しておく
+
+## router.refresh()
+ブラウザ側のキャッシュである、Router Cacheの削除できる
+以下のように記述することで実装できる
+```js
+import { useRouter } from 'next/navigation'; // next/routerもあるが違う！！
+
+const router = useRouter();
+router.refresh();
+```
+>sever actionを使用している場合は基本不要、サーバー側が自動でキャッシュを削除してくれる
